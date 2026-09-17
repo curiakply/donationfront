@@ -19,9 +19,9 @@ import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 // import ParishAnalytics from "./pages/ParishAnalytics";
 import AdminManagement from "./pages/AdminManagement"; 
 import DatabaseBackup from "./pages/DatabaseBackup"; 
-import PrintDesigner from "./pages/PrintDesigner";
+// import PrintDesigner from "./pages/PrintDesigner";
 import MarriagePage from "./pages/MarriagePage";
-import MarriagePrintSetup from "./pages/MarriagePrintSetup";
+// import MarriagePrintSetup from "./pages/MarriagePrintSetup";
 import PrintPage from "./pages/PrintPage";
 // Organization Pages
 import Diocese from "./pages/Diocese";
