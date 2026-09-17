@@ -20,7 +20,7 @@ import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import AdminManagement from "./pages/AdminManagement"; 
 import DatabaseBackup from "./pages/DatabaseBackup"; 
 // import PrintDesigner from "./pages/PrintDesigner";
-import MarriagePage from "./pages/MarriagePage";
+// import MarriagePage from "./pages/MarriagePage";
 // import MarriagePrintSetup from "./pages/MarriagePrintSetup";
 import PrintPage from "./pages/PrintPage";
 // Organization Pages
@@ -204,7 +204,7 @@ function App() {
                
                 
                   <Route exact path="/printPage" component={PrintPage} />
-                  <Route exact path="/marriagePage" component={MarriagePage} />
+                  {/* <Route exact path="/marriagePage" component={MarriagePage} /> */}
                   <Route exact path="/organization" component={organization} />
                   <Route exact path="/narration" component={narration} />
               
