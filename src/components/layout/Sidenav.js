@@ -232,13 +232,13 @@ const superAdminMenuItems = [
     icon: '👥',
     superAdminOnly: true,
   },
-  //   {
-  //   type: 'single',
-  //   path: '/database-backup',
-  //   label: 'Database Backup',
-  //   icon: '💾',
-  //   superAdminOnly: true,
-  // }
+    {
+    type: 'single',
+    path: '/database-backup',
+    label: 'Database Backup',
+    icon: '💾',
+    superAdminOnly: true,
+  }
 ];
 
 const Sidenav = ({ color, collapsed = false }) => {
