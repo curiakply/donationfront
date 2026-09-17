@@ -240,7 +240,7 @@ export default class SignIn extends Component {
                 lg={{ span: 12 }}
                 md={{ span: 12 }}
               >
-                <img src={signinbg} alt="" />
+                {/* <img src={signinbg} alt="" /> */}
               </Col>
             </Row>
           </Content>
