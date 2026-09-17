@@ -14,7 +14,7 @@ import SignIn from "./pages/SignIn";
 
 // Core Pages
 import Home from "./pages/Home";
-import Profile from "./pages/Profile";
+// import Profile from "./pages/Profile";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 // import ParishAnalytics from "./pages/ParishAnalytics";
 import AdminManagement from "./pages/AdminManagement"; 
