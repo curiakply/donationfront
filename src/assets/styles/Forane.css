@@ -1,0 +1,134 @@
+/* Modal Title */
+.custom-modal .ant-modal-title {
+    font-weight: bold;
+    font-size: 1.5rem;
+    color: #1890ff; /* Blue color for title */
+    padding-bottom: 10px; /* Added padding for spacing */
+}
+
+/* Modal Form Item Spacing */
+.modal-form-item {
+    margin-bottom: 20px;
+}
+
+/* Modal Input Styling */
+.modal-input {
+    padding: 10px;
+    font-size: 1rem;
+    border-radius: 4px; /* Rounded corners for input */
+    border: 1px solid #ddd; /* Subtle border */
+    width: 100%; /* Ensure full width */
+}
+
+/* Modal Action Buttons */
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+/* Save Button */
+.save-btn {
+    background-color: #1890ff;
+    border-color: #1890ff;
+    color: white;
+    padding: 8px 16px; /* Adjust padding */
+    border-radius: 4px; /* Rounded corners */
+}
+
+.save-btn:hover {
+    background-color: #40a9ff;
+    border-color: #40a9ff;
+}
+
+/* Cancel Button */
+.cancel-btn {
+    background-color: #f5f5f5;
+    border-color: #d9d9d9;
+    color: #333;
+    padding: 8px 16px; /* Adjust padding */
+    border-radius: 4px; /* Rounded corners */
+}
+
+.cancel-btn:hover {
+    background-color: #e8e8e8;
+    border-color: #bfbfbf;
+}
+
+/* Modal Background Styling */
+.ant-modal-content {
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive Modal Size */
+@media (max-width: 768px) {
+    .ant-modal-content {
+        width: 90%; /* Take up more space on smaller screens */
+    }
+
+    .custom-modal .ant-modal-title {
+        font-size: 1.25rem; /* Slightly smaller title on mobile */
+    }
+
+    .modal-input {
+        font-size: 0.9rem; /* Smaller text for mobile */
+    }
+
+    .modal-actions {
+        flex-direction: column; /* Stack buttons vertically */
+        gap: 10px;
+    }
+
+    .save-btn, .cancel-btn {
+        width: 100%; /* Full-width buttons on mobile */
+    }
+}
+
+/* For very small screens, under 500px */
+@media (max-width: 500px) {
+    .ant-modal-content {
+        width: 95%; /* Make modal take up more width */
+    }
+
+    .modal-input {
+        font-size: 0.85rem; /* Even smaller input text */
+    }
+
+    .custom-modal .ant-modal-title {
+        font-size: 1.1rem; /* Smaller font size for very small screens */
+    }
+
+    .save-btn, .cancel-btn {
+        padding: 6px 12px; /* Smaller button padding */
+    }
+}
+.custom-table .ant-table-thead > tr > th {
+    background: #5b626a;  /* Green background for a modern look */
+    color: #fff;  /* White text for contrast */    
+    font-size: 15px;  /* Increase font size for more emphasis */
+    padding: 8px 20px;  /* Adjust padding for better spacing */
+    text-align: center;  /* Center align the text */
+    text-transform: uppercase;  /* Capitalize text */
+    border-radius: 8px 8px 0 0;  /* Rounded top corners for a softer look */
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);  /* Subtle shadow for depth */
+}
+/* Increase padding and font size for table body */
+.custom-table .ant-table-tbody > tr > td {
+    padding: 20px 30px;  /* Increased padding for larger row height */
+    font-size: 14px;  /* Increased font size for readability */
+    text-align: left;  /* Center align table data */
+}
+
+/* Adjust table row hover effect */
+.custom-table .ant-table-tbody > tr:hover {
+    background: rgba(0, 128, 0, 0.1);  /* Light green hover effect */
+}
+
+/* Further increase row height if needed */
+.custom-table .ant-table-tbody > tr {
+    height: 60px;  /* Set a fixed height for rows (optional, you can adjust as needed) */
+    background: #f9f9f9;  /* Light background for rows */
+    border-bottom: 1px solid #ddd;  /* Subtle border for each row */
+}

@@ -1,0 +1,54 @@
+/* Style for the table container */
+.parish-table-container {
+    margin: 20px 0;
+    background-color: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 16px;
+  }
+  
+  /* Table header style */
+  .ant-table-thead > tr > th.custom-header {
+    background-color: #007bff; /* Forane primary color */
+    color: #ffffff;
+    font-weight: bold;
+    text-align: center;
+    text-transform: uppercase;
+    border: none;
+    padding: 12px 8px;
+  }
+  
+  /* Table body rows style */
+  .ant-table-tbody > tr > td {
+    text-align: center;
+    padding: 10px 8px;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  
+  /* Hover effect for table rows */
+  .ant-table-tbody > tr:hover > td {
+    background-color: #e6f7ff; /* Light blue hover effect */
+  }
+  
+  /* Custom buttons within the table */
+  .ant-table-tbody .ant-btn {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+  
+  /* Table border radius */
+  .ant-table {
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  /* Responsive handling for smaller screens */
+  @media (max-width: 768px) {
+    .parish-table-container {
+      padding: 8px;
+    }
+    .ant-table {
+      font-size: 12px;
+    }
+  }
+  

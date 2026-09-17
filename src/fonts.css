@@ -1,0 +1,83 @@
+@font-face {
+    font-family: 'FML-TTAyilyamBold';
+    src: url('/src/assets/fonts/FMLAL0NTT.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'FML-TTGopika';
+    src: url('/src/assets/fonts/FMLGP0BTT.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'FML-TTGopika1';
+    src: url('/src/assets/fonts/FMLGP0NTT.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'FML-TTJaya';
+    src: url('/src/assets/fonts/FMLJA0ITT.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'ML-TTAnakha';
+    src: url('/src/assets/fonts/ML_TT_Anakha_Bold.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+.malayalam-text {
+    font-family: 'FML-TTAyilyamBold', sans-serif;
+}
+
+.malayalam-text1 {
+    font-family: 'FML-TTGopika', sans-serif;
+}
+
+.malayalam-text2 {
+    font-family: 'FML-TTJaya', sans-serif;
+}
+
+.malayalam-text3 {
+    font-family: 'FML-TTGopika1', sans-serif;
+}
+.malayalam-text4 {
+    font-family: 'ML-TTAnakha', sans-serif;
+}
+@media print {
+    @page {
+        size: A4;
+        margin: 20mm;
+    }
+
+    /* Hide everything by default */
+    body * {
+        visibility: hidden;
+    }
+
+    /* Hide menu bar and controls explicitly */
+    .menu-bar, .no-print, .controls-section {
+        display: none !important;
+    }
+
+    /* Show only print content */
+    .print-content, .print-content * {
+        visibility: visible !important;
+        position: relative;
+    }
+
+    .print-content {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 210mm !important;
+        padding: 10mm !important;
+    }
+}

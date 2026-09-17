@@ -1,0 +1,31 @@
+.container1 {
+  display: flex;
+  width: 100%;
+  gap: 2rem;
+  position: relative;
+}
+
+.chart-container {
+  background: white;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+  .left-section1 {
+    flex: 3; /* Takes up 75% of the space */
+    max-width: 50%;
+  }
+  
+  .right-section1 {
+    flex: 1; /* Takes up 25% of the space */
+    max-width: 50%;
+  }
+  
+  @media (max-width: 768px) {
+    .left-section1,
+    .right-section1 {
+      flex: 1; /* Each section takes full width on smaller screens */
+      max-width: 100%;
+    }
+  }
+  

@@ -1,0 +1,28 @@
+const malaylamText = [
+  "Poh³ 2024 ",
+  "Imªnc¸Ån cq]X",
+  "]¦phbv¡eneqsS Pohsâ kar²nbntebv¡v ",
+  "³asN¿p¶Xnepw \n§Ä¡pÅh ]¦phbv¡p¶Xnepw Dt]Ivj hcp¯cpXv. A¯cw _enIÄ ssZh¯np {]oXnIcamWv.(sl{_mbÀ 13:16) ",
+  "CShI:",
+  "ho«pt]cv:",
+  "IpSpw_ mY³/mYbpsS maw",
+  "Iq«mbva",
+  "hnemkw:",
+  "t^m¬ ¼À:",
+  "{Ia ¼À",
+  "amt½mZok t]cv",
+  "hnfn¡p¶ t]cv",
+  "IpSpw_ mYpambpÅ _Ôw ",
+  "]q /kv{Xo ",
+  "P\\ XobXn",
+  "sXmgnÂ",
+  "hnZym`ymkw",
+  "Zimwiw 03-23",
+  "Zimwiw 2024",
+  " IpSpw_mYsâ t]cv:  ",
+  " hnImcnbpsS t]cv:",
+  "XnbXn :",
+  "]ÅnbpsS koÂ ",
+];
+
+export default malaylamText;
