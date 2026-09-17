@@ -16,7 +16,7 @@ import SignIn from "./pages/SignIn";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
-import ParishAnalytics from "./pages/ParishAnalytics";
+// import ParishAnalytics from "./pages/ParishAnalytics";
 import AdminManagement from "./pages/AdminManagement"; 
 import DatabaseBackup from "./pages/DatabaseBackup"; 
 import PrintDesigner from "./pages/PrintDesigner";
@@ -31,42 +31,42 @@ import Congregation from "./pages/Congregation";
 import Department from "./pages/Department";
 import Forane from "./pages/Forane";
 import Parish from "./pages/Parish";
-import Koottayma from "./pages/Koottayma";
-import Family from "./pages/Family";
+// import Koottayma from "./pages/Koottayma";
+// import Family from "./pages/Family";
 
 // Finance Pages
-import PersonManagement from "./pages/Finanace";
-import FamilyFinanace from "./pages/FamilyFinanace";
-import FamilyNew from "./pages/FamilyNew";
-import FamilyNewjune14 from "./pages/FamilyNew june14";
-import FamilyNew1 from "./pages/FamilyNew1";
-import TransactionPage from "./pages/Transactionpage";
-import TransactionListPage from './pages/TransactionListPage';
-import Titheprint from "./pages/Titheprint";
+// import PersonManagement from "./pages/Finanace";
+// import FamilyFinanace from "./pages/FamilyFinanace";
+// import FamilyNew from "./pages/FamilyNew";
+// import FamilyNewjune14 from "./pages/FamilyNew june14";
+// import FamilyNew1 from "./pages/FamilyNew1";
+// import TransactionPage from "./pages/Transactionpage";
+// import TransactionListPage from './pages/TransactionListPage';
+// import Titheprint from "./pages/Titheprint";
 import Assignmentpage from "./pages/Assignmentpage";
 
 // Settings Pages
-import FinanceSettings from "./pages/FinanceSettings";
-import CommunitySettings from "./pages/communitysettings";
-import OtherProjectSettings from "./pages/otherprojectsettings";
-import ParishAllocSettings from "./pages/ParishallocSettings";
-import ParishAllocSettings1 from "./pages/ParishallocSettings1";
+// import FinanceSettings from "./pages/FinanceSettings";
+// import CommunitySettings from "./pages/communitysettings";
+// import OtherProjectSettings from "./pages/otherprojectsettings";
+// import ParishAllocSettings from "./pages/ParishallocSettings";
+// import ParishAllocSettings1 from "./pages/ParishallocSettings1";
 import organization from "./pages/Organization";
 import users from "./pages/Usermanagement";
 import narration from "./pages/Narration";
 // Other Pages
-import MoveFamily from "./pages/movefamily";
-import Community from "./pages/community";
-import Project from "./pages/otherprojects";
-import ChurchReportPage from './pages/ChurchReportPage';
-import ComprehensiveReportsDashboard from './pages/ComprehensiveReportsDashboard';
-import BulkFamilyPrintPage from './pages/BulkFamilyPrintPage';
-import OpeningBalance from './pages/OpeningBalance';
-import YearEndTransfer from './pages/YearEndTransfer';
+// import MoveFamily from "./pages/movefamily";
+// import Community from "./pages/community";
+// import Project from "./pages/otherprojects";
+// import ChurchReportPage from './pages/ChurchReportPage';
+// import ComprehensiveReportsDashboard from './pages/ComprehensiveReportsDashboard';
+// import BulkFamilyPrintPage from './pages/BulkFamilyPrintPage';
+// import OpeningBalance from './pages/OpeningBalance';
+// import YearEndTransfer from './pages/YearEndTransfer';
 import logout from './pages/logout';
-import AuditDashboard from './pages/AuditDashboard';
-import AdvancedFilterPage from './pages/AdvancedFilterPage';
-import UnifiedDataFilter from './pages/UnifiedDataFilter';
+// import AuditDashboard from './pages/AuditDashboard';
+// import AdvancedFilterPage from './pages/AdvancedFilterPage';
+// import UnifiedDataFilter from './pages/UnifiedDataFilter';
 import Donationpage from './pages/Donationpage';
 import DonationReport from './pages/DonationReport';
 import Organizationreport from './pages/Organizationreport'; 
@@ -201,50 +201,28 @@ function App() {
                                    <Route exact path="/department" component={Department} />
                   <Route exact path="/forane" component={Forane} />
                   <Route exact path="/parish" component={Parish} />
-                  <Route exact path="/koottayma" component={Koottayma} />
-                  <Route exact path="/Family" component={Family} />
-                  <Route exact path="/print-designer" component={PrintDesigner} />
+               
+                
                   <Route exact path="/printPage" component={PrintPage} />
                   <Route exact path="/marriagePage" component={MarriagePage} />
                   <Route exact path="/organization" component={organization} />
                   <Route exact path="/narration" component={narration} />
-                  <Route exact path="/marriagePrintSetup" component={MarriagePrintSetup} />
+              
                   <Route exact path="/donationReport" component={DonationReport} />
                   <Route exact path="/priestledger" component={Priestledger} />
                   <Route exact path="/organizationreport" component={Organizationreport} />
                  
                   {/* Finance routes */}
-                  <Route exact path="/PersonManagement" component={PersonManagement} />
-                  <Route exact path="/FamilyFinanace" component={FamilyFinanace} />
-                  <Route exact path="/FamilyFinance" component={FamilyNewjune14} />
-                  <Route exact path="/FamilyFinance1" component={FamilyNew1} />
-                  <Route exact path="/transactions/new" component={TransactionListPage} />
-                  <Route exact path="/transactions" component={TransactionPage} />
-                  <Route exact path="/Titheprint" component={Titheprint} />
-                  <Route exact path="/FamilyNewjune14" component={FamilyNew} />
+                
                   <Route exact path="/Assignment" component={Assignmentpage} />
        <Route exact path="/donationpage" component={Donationpage} />
         <Route exact path="/curiadashboard" component={Curiadashboard} />
             
                   {/* Settings routes */}
-                  <Route exact path="/FinanceSettings" component={FinanceSettings} />
-                  <Route exact path="/communitysettings" component={CommunitySettings} />
-                  <Route exact path="/otherprojectsettings" component={OtherProjectSettings} />
-                  <Route exact path="/parishallocsettings" component={ParishAllocSettings} />
-                  <Route exact path="/parishallocsettings1" component={ParishAllocSettings1} />
+                
 
                   {/* Other routes */}
-                  <Route exact path="/movefamily" component={MoveFamily} />
-                  <Route exact path="/community" component={Community} />
-                  <Route exact path="/project" component={Project} />
-                  <Route exact path="/report" component={ChurchReportPage} />
-                  <Route exact path="/ReportsDashboard" component={ComprehensiveReportsDashboard} />
-                  <Route exact path="/family-print" component={BulkFamilyPrintPage} />
-                  <Route exact path="/print-family/:id" component={BulkFamilyPrintPage} />
-                  <Route exact path="/addopening" component={OpeningBalance} />
-                  <Route exact path="/yearendtransfer" component={YearEndTransfer} />
-                  <Route exact path="/AuditDashboard" component={AuditDashboard} />
-                  <Route exact path="/AdvancedFilterPage" component={AdvancedFilterPage} />
+                 
                   <Route exact path="/databasebk" component={Databasebk} />
                   <Route exact path="/logout" component={logout} />
 
