@@ -183,15 +183,15 @@ function App() {
                 <Switch>
                   {/* Super Admin Dashboard */} 
                   <SuperAdminRoute exact path="/super-admin" component={SuperAdminDashboard} />
-                   <SuperAdminRoute exact path="/parishAnalytics" component={ParishAnalytics} />
+                   {/* <SuperAdminRoute exact path="/parishAnalytics" component={ParishAnalytics} /> */}
                     <SuperAdminRoute exact path="/mgm" component={AdminManagement} />
                     <SuperAdminRoute exact path="/database-backup" component={DatabaseBackup} />
-                       <SuperAdminRoute exact path="/filter" component={UnifiedDataFilter} />
+                       {/* <SuperAdminRoute exact path="/filter" component={UnifiedDataFilter} /> */}
                         <SuperAdminRoute exact path="/users" component={users} />
                   {/* Core routes */}
                   <Route exact path="/home" component={Home} />
                   <Route exact path="/dashboard" component={Home} />
-                  <Route exact path="/profile" component={Profile} />
+                  {/* <Route exact path="/profile" component={Profile} /> */}
 
                   {/* Organization routes */}
                    <Route exact path="/congregation" component={Congregation} />
