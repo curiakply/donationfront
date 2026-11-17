@@ -207,67 +207,209 @@ const DonationReport = () => {
   const exportPDF = () => {
     if (!report.length) return;
     const doc = new jsPDF({ orientation: "landscape" });
-    doc.setFontSize(16); doc.setFont("helvetica", "bold"); doc.text("Donation Report", 14, 18);
+    const pageW = doc.internal.pageSize.getWidth();
+    const margin = 14;
+    const tableW = pageW - margin * 2;
+
+    // Header
+    doc.setFontSize(16); doc.setFont("helvetica", "bold"); doc.text("Donation Report", margin, 18);
     doc.setFontSize(9); doc.setFont("helvetica", "normal");
     const parts = [];
     if (fromDate) parts.push(`From: ${new Date(fromDate).toLocaleDateString()}`);
     if (toDate) parts.push(`To: ${new Date(toDate).toLocaleDateString()}`);
     if (country) parts.push(`Country: ${country}`);
-    doc.text(parts.length ? parts.join("  |  ") : "All records", 14, 25);
-    if (summary) doc.text(`Priests: ${summary.totalPriests}  |  Contributors: ${summary.contributingPriests}  |  NIL: ${summary.nilPriests}  |  Total: ${fmtINR_PDF(summary.grandTotalINR)}`, 14, 31);
+    doc.text(parts.length ? parts.join("  |  ") : "All records", margin, 25);
+    if (summary) doc.text(`Priests: ${summary.totalPriests}  |  Contributors: ${summary.contributingPriests}  |  NIL: ${summary.nilPriests}  |  Total: ${fmtINR_PDF(summary.grandTotalINR)}`, margin, 31);
 
-    const tableBody = [];
-    const priestRowIndices = new Set();
+    // Column widths (proportions of tableW)
+    const colRatios = [0.06, 0.18, 0.12, 0.24, 0.1, 0.12, 0.18];
+    const colW = colRatios.map((r) => r * tableW);
+    const rowH = 8;
+    const pad = 3;
+    let curY = 36;
+
+    const drawCell = (x, y, w, h, text, opts = {}) => {
+      doc.setDrawColor(0, 0, 0);
+      doc.setLineWidth(0.2);
+      doc.rect(x, y, w, h);
+      if (text) {
+        doc.setFontSize(opts.fontSize || 8);
+        doc.setFont("helvetica", opts.bold ? "bold" : "normal");
+        doc.setTextColor(opts.textColor || 0);
+        const textY = y + h / 2 + 3;
+        if (opts.align === "center") {
+          doc.text(String(text), x + w / 2, textY, { align: "center" });
+        } else if (opts.align === "right") {
+          doc.text(String(text), x + w - pad, textY, { align: "right" });
+        } else {
+          doc.text(String(text), x + pad, textY);
+        }
+      }
+    };
+
+    const drawHeaderRow = () => {
+      const headers = ["Sl No", "Priest Name", "Date", "Purpose", "Currency", "Amount", "Total"];
+      let x = margin;
+      headers.forEach((h, ci) => {
+        doc.setFillColor(26, 35, 126);
+        doc.rect(x, curY, colW[ci], rowH, "F");
+        doc.setDrawColor(0); doc.setLineWidth(0.2);
+        doc.rect(x, curY, colW[ci], rowH);
+        doc.setFontSize(8); doc.setFont("helvetica", "bold"); doc.setTextColor(255);
+        doc.text(h, x + pad, curY + rowH / 2 + 3);
+        x += colW[ci];
+      });
+      curY += rowH;
+    };
+
+    const checkPageBreak = (neededH) => {
+      const pageH = doc.internal.pageSize.getHeight();
+      if (curY + neededH > pageH - 10) {
+        doc.addPage();
+        curY = 14;
+        drawHeaderRow();
+      }
+    };
+
+    // Draw table header
+    drawHeaderRow();
+    doc.setTextColor(0);
+
+    // Draw rows per priest with merged Sl No, Priest Name, Total
+    report.forEach((r, i) => {
+      const donations = (!r.isNil && r.donations && r.donations.length > 0) ? r.donations : [];
+      const rowCount = Math.max(donations.length, 1);
+
+      // Compute total string
+      const totalParts = [];
+      if (r.currencies && r.currencies.length) {
+        r.currencies.forEach((c) => {
+          const sum = donations.filter((d) => d.currency === c).reduce((s, d) => s + d.amount, 0);
+          if (sum > 0) totalParts.push(`${c} ${Number(sum).toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`);
+        });
+      }
+      const totalStr = totalParts.length ? totalParts.join(", ") : (r.isNil ? "NIL" : "—");
+
+      const groupH = rowCount * rowH;
+      checkPageBreak(groupH);
+      const groupStartY = curY;
+
+      // Draw individual donation rows (columns 2-5: Date, Purpose, Currency, Amount)
+      if (donations.length === 0) {
+        // NIL priest — draw empty middle cells
+        let x = margin + colW[0] + colW[1];
+        for (let ci = 2; ci <= 5; ci++) {
+          drawCell(x, curY, colW[ci], rowH, "");
+          x += colW[ci];
+        }
+        curY += rowH;
+      } else {
+        donations.forEach((d) => {
+          let x = margin + colW[0] + colW[1];
+          const vals = [
+            d.date ? new Date(d.date).toLocaleDateString("en-GB") : "",
+            d.purpose || "",
+            d.currency || "",
+            d.amount ? Number(d.amount).toLocaleString("en-IN") : "",
+          ];
+          const aligns = ["left", "left", "center", "right"];
+          vals.forEach((v, vi) => {
+            drawCell(x, curY, colW[vi + 2], rowH, v, { align: aligns[vi] });
+            x += colW[vi + 2];
+          });
+          curY += rowH;
+        });
+      }
+
+      // Draw merged cells: Sl No (col 0), Priest Name (col 1), Total (col 6)
+      const mergedCols = [
+        { ci: 0, text: String(i + 1), align: "center", bold: true },
+        { ci: 1, text: `Fr. ${r.priest.name}`, align: "left", bold: true },
+        { ci: 6, text: totalStr, align: "left", bold: true },
+      ];
+      mergedCols.forEach(({ ci, text, align, bold }) => {
+        let x = margin;
+        for (let c = 0; c < ci; c++) x += colW[c];
+        drawCell(x, groupStartY, colW[ci], groupH, text, { align, bold });
+      });
+    });
+
+    doc.save(`Donation_Report${fromDate ? `_${fromDate}` : ""}${toDate ? `_to_${toDate}` : ""}.pdf`);
+  };
+
+  const exportWord = () => {
+    if (!report.length) return;
+    const filterParts = [];
+    if (fromDate) filterParts.push(`From: ${new Date(fromDate).toLocaleDateString()}`);
+    if (toDate) filterParts.push(`To: ${new Date(toDate).toLocaleDateString()}`);
+    if (country) filterParts.push(`Country: ${country}`);
+
+    let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8"><title>Donation Report</title>
+<style>
+  body { font-family: Calibri, Arial, sans-serif; margin: 40px; }
+  h1 { font-size: 18pt; color: #1a237e; margin-bottom: 4px; }
+  .subtitle { font-size: 10pt; color: #666; margin-bottom: 16px; }
+  table { border-collapse: collapse; width: 100%; margin-top: 12px; }
+  th { background-color: #1a237e; color: #fff; font-size: 10pt; padding: 8px 10px; text-align: left; }
+  td { border: 1px solid #ccc; font-size: 10pt; padding: 6px 10px; vertical-align: top; }
+  .priest-name { font-weight: bold; }
+  .total-cell { font-weight: bold; }
+  .summary-table { margin-bottom: 16px; }
+  .summary-table td { border: none; padding: 2px 12px 2px 0; font-size: 10pt; }
+  .summary-table td.label { font-weight: bold; color: #1a237e; }
+</style></head><body>
+<h1>Donation Report</h1>
+<div class="subtitle">${filterParts.length ? filterParts.join(" &nbsp;|&nbsp; ") : "All records"}</div>`;
+
+    if (summary) {
+      html += `<table class="summary-table"><tr><td class="label">Total Priests:</td><td>${summary.totalPriests}</td><td class="label">Contributors:</td><td>${summary.contributingPriests}</td><td class="label">NIL:</td><td>${summary.nilPriests}</td><td class="label">Grand Total:</td><td>${fmtINR_PDF(summary.grandTotalINR)}</td></tr></table>`;
+    }
+
+    html += `<table><tr><th>Sl No</th><th>Priest Name</th><th>Date</th><th>Purpose</th><th>Currency</th><th>Amount</th><th>Total</th></tr>`;
 
     report.forEach((r, i) => {
-      const foreignTotal = r.currencies && r.currencies.length
-        ? r.currencies.map((c) => {
-            const sum = (r.donations || []).filter((d) => d.currency === c).reduce((s, d) => s + d.amount, 0);
-            return fmtCurrency_PDF(sum, c);
-          }).join(", ")
-        : "-";
+      const donations = (!r.isNil && r.donations && r.donations.length > 0) ? r.donations : [];
+      const totalParts = [];
+      if (r.currencies && r.currencies.length) {
+        r.currencies.forEach((c) => {
+          const sum = donations.filter((d) => d.currency === c).reduce((s, d) => s + d.amount, 0);
+          if (sum > 0) totalParts.push(`${c} ${Number(sum).toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`);
+        });
+      }
+      const totalStr = totalParts.length ? totalParts.join(", ") : (r.isNil ? "NIL" : "—");
+      const span = Math.max(donations.length, 1);
 
-      priestRowIndices.add(tableBody.length);
-      tableBody.push([
-        i + 1, `Fr. ${r.priest.name}`, r.priest.hname || "",
-        r.priest.workingCountry || r.priest.workingRegion || "",
-        r.donationCount, foreignTotal, fmtINR_PDF(r.totalINR),
-        r.isNil ? "NIL" : "Contributed",
-      ]);
-
-      if (!r.isNil && r.donations && r.donations.length > 0) {
-        r.donations.forEach((d) => {
-          tableBody.push([
-            "", `    ${d.date ? new Date(d.date).toLocaleDateString() : "-"}`,
-            d.purpose || "-", d.modeOfTransfer || "-", d.currency || "",
-            fmtCurrency_PDF(d.amount, d.currency), fmtINR_PDF(d.inrAmount),
-            d.remarks || "-",
-          ]);
+      if (donations.length === 0) {
+        html += `<tr><td class="priest-name" style="text-align:center">${i + 1}</td><td class="priest-name">Fr. ${r.priest.name}</td><td></td><td></td><td></td><td></td><td class="total-cell">${totalStr}</td></tr>`;
+      } else {
+        donations.forEach((d, di) => {
+          html += `<tr>`;
+          if (di === 0) {
+            html += `<td class="priest-name" style="text-align:center; vertical-align:middle" rowspan="${span}">${i + 1}</td>`;
+            html += `<td class="priest-name" style="vertical-align:middle" rowspan="${span}">Fr. ${r.priest.name}</td>`;
+          }
+          html += `<td>${d.date ? new Date(d.date).toLocaleDateString("en-GB") : ""}</td>`;
+          html += `<td>${d.purpose || ""}</td>`;
+          html += `<td style="text-align:center">${d.currency || ""}</td>`;
+          html += `<td style="text-align:right">${d.amount ? Number(d.amount).toLocaleString("en-IN") : ""}</td>`;
+          if (di === 0) {
+            html += `<td class="total-cell" style="vertical-align:middle" rowspan="${span}">${totalStr}</td>`;
+          }
+          html += `</tr>`;
         });
       }
     });
 
-    autoTable(doc, {
-      startY: 36,
-      head: [["#", "Priest / Date", "House Name / Purpose", "Country / Mode", "Count / Currency", "Foreign Amount", "INR Amount", "Status / Remarks"]],
-      body: tableBody,
-      styles: { fontSize: 8, cellPadding: 3 },
-      headStyles: { fillColor: [26, 35, 126], textColor: 255, fontStyle: "bold" },
-      willDrawCell: (data) => {
-        if (data.section === "body") {
-          if (priestRowIndices.has(data.row.index)) {
-            data.cell.styles.fontStyle = "bold";
-            data.cell.styles.fillColor = [232, 234, 246];
-            data.cell.styles.textColor = [15, 23, 42];
-          } else {
-            data.cell.styles.textColor = [100, 116, 139];
-            data.cell.styles.fontSize = 7;
-            data.cell.styles.fillColor = [248, 250, 252];
-          }
-        }
-      },
-    });
-    doc.save(`Donation_Report${fromDate ? `_${fromDate}` : ""}${toDate ? `_to_${toDate}` : ""}.pdf`);
+    html += `</table></body></html>`;
+
+    const blob = new Blob([html], { type: "application/msword" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Donation_Report${fromDate ? `_${fromDate}` : ""}${toDate ? `_to_${toDate}` : ""}.doc`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const exportExcel = () => {
@@ -333,14 +475,14 @@ const DonationReport = () => {
     ];
     XLSX.utils.book_append_sheet(wb, wsDetail, "Donation Details");
 
-    const flatHeaders = ["Sl No", "Priest", "House Name", "Country", "Date", "Purpose", "Currency", "Amount", "INR Amount", "Mode", "Remarks"];
+    const flatHeaders = ["Sl No", "Priest",  "Country", "Date", "Purpose", "Currency", "Amount", "INR Amount", "Mode", "Remarks"];
     const flatRows = [flatHeaders];
     let slNo = 1;
     report.forEach((r) => {
       if (!r.isNil && r.donations && r.donations.length > 0) {
         r.donations.forEach((d) => {
           flatRows.push([
-            slNo++, `Fr. ${r.priest.name}`, r.priest.hname || "",
+            slNo++, `Fr. ${r.priest.name}`, 
             r.priest.workingCountry || r.priest.workingRegion || "",
             d.date ? new Date(d.date).toLocaleDateString() : "",
             d.purpose || "", d.currency || "", d.amount || 0,
@@ -359,7 +501,7 @@ const DonationReport = () => {
   };
 
   const columns = useMemo(() => [
-    { accessorKey: "priest.name", header: "Priest", size: 220, Cell: ({ row }) => (<Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}><Box sx={{ width: 34, height: 34, borderRadius: 2, flexShrink: 0, background: row.original.isNil ? "linear-gradient(135deg, #FEE2E2, #FECACA)" : "linear-gradient(135deg, #E8EAF6, #C5CAE9)", display: "flex", alignItems: "center", justifyContent: "center" }}><PersonIcon fontSize="small" sx={{ color: row.original.isNil ? "#DC2626" : "#1a237e" }} /></Box><Box><Typography variant="body2" sx={{ fontWeight: 700, color: "#0F172A" }}>Fr. {row.original.priest.name}</Typography><Typography variant="caption" sx={{ color: "#64748B" }}>{row.original.priest.hname || ""}</Typography></Box></Box>) },
+    { accessorKey: "priest.name", header: "Priest", size: 220, Cell: ({ row }) => (<Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}><Box sx={{ width: 34, height: 34, borderRadius: 2, flexShrink: 0, background: row.original.isNil ? "linear-gradient(135deg, #FEE2E2, #FECACA)" : "linear-gradient(135deg, #E8EAF6, #C5CAE9)", display: "flex", alignItems: "center", justifyContent: "center" }}><PersonIcon fontSize="small" sx={{ color: row.original.isNil ? "#DC2626" : "#1a237e" }} /></Box><Box><Typography variant="body2" sx={{ fontWeight: 700, color: "#0F172A" }}>Fr. {row.original.priest.name}</Typography></Box></Box>) },
     { accessorKey: "priest.workingCountry", header: "Country", size: 140, Cell: ({ row }) => (<Box sx={{ display: "flex", alignItems: "center", gap: 1 }}><PublicIcon fontSize="small" sx={{ color: "#64748B" }} /><Typography variant="body2">{row.original.priest.workingCountry || row.original.priest.workingRegion || "—"}</Typography></Box>) },
     { accessorKey: "donationCount", header: "# Donations", size: 120, Cell: ({ row }) => (<Typography variant="body2" sx={{ fontWeight: 700, color: row.original.donationCount > 0 ? "#1a237e" : "#DC2626", textAlign: "center" }}>{row.original.donationCount}</Typography>) },
     { accessorKey: "totalAmount", header: "Total (Foreign)", size: 180, Cell: ({ row }) => { if (row.original.isNil) return <Typography variant="body2" sx={{ color: "#9CA3AF" }}>—</Typography>; return (<Box>{row.original.currencies.map((c) => { const sum = row.original.donations.filter((d) => d.currency === c).reduce((s, d) => s + d.amount, 0); return <Typography key={c} variant="body2" sx={{ fontWeight: 600 }}>{fmtCurrency(sum, c)}</Typography>; })}</Box>); } },
@@ -378,7 +520,7 @@ const DonationReport = () => {
 
   return (
     <Page><CssBaseline />
-      <StyledCard sx={{ mb: 3 }}><Content><Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><Box sx={{ display: "flex", alignItems: "center", gap: 2 }}><IconBox color="#4f46e5"><AssessmentIcon sx={{ fontSize: 26 }} /></IconBox><Box><GradientText>Donation Report</GradientText><Typography variant="body2" sx={{ color: "#64748B" }}>View contributions by priest with date range and country filters</Typography></Box></Box><Box sx={{ display: "flex", gap: 1.5 }}><GradientBtn startIcon={<FileDownloadIcon />} onClick={exportExcel} disabled={!report.length} sx={{ background: "linear-gradient(135deg, #059669, #047857)", "&:hover": { background: "linear-gradient(135deg, #047857, #059669)" } }}>Export Excel</GradientBtn><GradientBtn startIcon={<FileDownloadIcon />} onClick={exportPDF} disabled={!report.length}>Export PDF</GradientBtn></Box></Box></Content></StyledCard>
+      <StyledCard sx={{ mb: 3 }}><Content><Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><Box sx={{ display: "flex", alignItems: "center", gap: 2 }}><IconBox color="#4f46e5"><AssessmentIcon sx={{ fontSize: 26 }} /></IconBox><Box><GradientText>Donation Report</GradientText><Typography variant="body2" sx={{ color: "#64748B" }}>View contributions by priest with date range and country filters</Typography></Box></Box><Box sx={{ display: "flex", gap: 1.5 }}><GradientBtn startIcon={<FileDownloadIcon />} onClick={exportExcel} disabled={!report.length} sx={{ background: "linear-gradient(135deg, #059669, #047857)", "&:hover": { background: "linear-gradient(135deg, #047857, #059669)" } }}>Export Excel</GradientBtn><GradientBtn startIcon={<FileDownloadIcon />} onClick={exportPDF} disabled={!report.length}>Export PDF</GradientBtn><GradientBtn startIcon={<FileDownloadIcon />} onClick={exportWord} disabled={!report.length} sx={{ background: "linear-gradient(135deg, #7c3aed, #6d28d9)", "&:hover": { background: "linear-gradient(135deg, #6d28d9, #7c3aed)" } }}>Export Word</GradientBtn></Box></Box></Content></StyledCard>
 
       <StyledCard sx={{ mb: 3, overflow: "visible" }}>
         <Box sx={{ p: 2.5, display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }} onClick={() => setFiltersOpen(!filtersOpen)}>

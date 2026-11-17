@@ -58,7 +58,7 @@ const PriestLedger = () => {
     doc.setFontSize(16); doc.setFont("helvetica", "bold"); doc.text("Priest Donation Ledger", 14, 18);
     doc.setFontSize(10); doc.setFont("helvetica", "normal");
     doc.text(`Priest: Fr. ${summary.priest.name}`, 14, 26);
-    doc.text(`House Name: ${summary.priest.hname || "-"}`, 14, 32);
+    // doc.text(`House Name: ${summary.priest.hname || "-"}`, 14, 32);
     const parts = [];
     if (fromDate) parts.push(`From: ${new Date(fromDate).toLocaleDateString()}`);
     if (toDate) parts.push(`To: ${new Date(toDate).toLocaleDateString()}`);
@@ -72,16 +72,16 @@ const PriestLedger = () => {
 
     autoTable(doc, {
       startY,
-      head: [["#", "Date", "Receivers", "Purpose", "Currency", "Amount", "INR Amount", "Running Total", "Mode", "Remarks"]],
+      head: [["#", "Receivers","Date",  "Purpose", "Currency", "Amount", "INR Amount", "Mode", "Remarks"]],
       body: ledger.map((r) => [
         r.slNo,
-        r.date ? new Date(r.date).toLocaleDateString() : "-",
         r.organization,
+        r.date ? new Date(r.date).toLocaleDateString() : "-",        
         r.purpose || "-",
         r.currency,
         fmtCurrency_PDF(r.amount, r.currency),
         fmtINR_PDF(r.inrAmount),
-        fmtINR_PDF(r.runningTotal),
+        // fmtINR_PDF(r.runningTotal),
         r.modeOfTransfer || "-",
         r.remarks || "-",
       ]),
@@ -102,7 +102,7 @@ const PriestLedger = () => {
       ["Priest Donation Ledger"],
       [],
       ["Priest", `Fr. ${priestName}`],
-      ["House Name", summary.priest.hname || ""],
+      // ["House Name", summary.priest.hname || ""],
       ["Country", summary.priest.workingCountry || ""],
       ["Phone", summary.priest.phone || ""],
       [],
@@ -158,13 +158,14 @@ const PriestLedger = () => {
 
   const columns = useMemo(() => [
     { accessorKey: "slNo", header: "#", size: 60, Cell: ({ row }) => <Typography variant="body2" sx={{ fontWeight: 600, textAlign: "center", color: "#64748B" }}>{row.original.slNo}</Typography> },
-    { accessorKey: "date", header: "Date", size: 120, Cell: ({ row }) => <Typography variant="body2" sx={{ fontWeight: 600, color: "#0F172A" }}>{row.original.date ? new Date(row.original.date).toLocaleDateString() : "—"}</Typography> },
     { accessorKey: "organization", header: "Receivers", size: 180, Cell: ({ row }) => <Typography variant="body2" sx={{ fontWeight: 600, color: "#0F172A" }}>{row.original.organization}</Typography> },
+    { accessorKey: "date", header: "Date", size: 120, Cell: ({ row }) => <Typography variant="body2" sx={{ fontWeight: 600, color: "#0F172A" }}>{row.original.date ? new Date(row.original.date).toLocaleDateString() : "—"}</Typography> },
+
     { accessorKey: "purpose", header: "Purpose", size: 160, Cell: ({ row }) => <Typography variant="body2" sx={{ color: "#64748B" }}>{row.original.purpose || "—"}</Typography> },
     { accessorKey: "currency", header: "Currency", size: 100, Cell: ({ row }) => <Chip label={row.original.currency} size="small" sx={{ fontWeight: 700, fontSize: "0.7rem", height: 22, bgcolor: "#E8EAF6", color: "#1a237e" }} /> },
     { accessorKey: "amount", header: "Amount", size: 130, Cell: ({ row }) => <Typography variant="body2" sx={{ fontWeight: 700, textAlign: "right", color: "#4f46e5" }}>{fmtCurrency(row.original.amount, row.original.currency)}</Typography> },
     { accessorKey: "inrAmount", header: "INR Amount", size: 130, Cell: ({ row }) => <Typography variant="body2" sx={{ fontWeight: 700, textAlign: "right", color: "#059669" }}>{fmtINR(row.original.inrAmount)}</Typography> },
-    { accessorKey: "runningTotal", header: "Running Total", size: 150, Cell: ({ row }) => (<Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, bgcolor: "#E8EAF6", borderRadius: 1.5, px: 1.5, py: 0.3 }}><RupeeIcon sx={{ fontSize: 14, color: "#1a237e" }} /><Typography variant="body2" sx={{ fontWeight: 800, color: "#1a237e" }}>{fmtINR(row.original.runningTotal)}</Typography></Box>) },
+    // { accessorKey: "runningTotal", header: "Running Total", size: 150, Cell: ({ row }) => (<Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, bgcolor: "#E8EAF6", borderRadius: 1.5, px: 1.5, py: 0.3 }}><RupeeIcon sx={{ fontSize: 14, color: "#1a237e" }} /><Typography variant="body2" sx={{ fontWeight: 800, color: "#1a237e" }}>{fmtINR(row.original.runningTotal)}</Typography></Box>) },
     { accessorKey: "modeOfTransfer", header: "Mode", size: 120, Cell: ({ row }) => <Chip label={row.original.modeOfTransfer || "—"} size="small" variant="outlined" sx={{ fontWeight: 600, fontSize: "0.7rem", height: 22, borderColor: "#C5CAE9", color: "#64748B" }} /> },
     { accessorKey: "remarks", header: "Remarks", size: 150, Cell: ({ row }) => <Typography variant="body2" sx={{ color: "#64748B", fontStyle: row.original.remarks ? "normal" : "italic" }}>{row.original.remarks || "—"}</Typography> },
   ], []);
@@ -192,7 +193,8 @@ const PriestLedger = () => {
           <StyledCard sx={{ p: 2.5, mb: 2, background: "linear-gradient(135deg, #f8fafc, #E8EAF6)" }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <IconBox color="#4f46e5" sx={{ width: 50, height: 50, borderRadius: "50%" }}><PersonIcon sx={{ fontSize: 26 }} /></IconBox>
-              <Box><GradientText variant="h6">Fr. {summary.priest.name}</GradientText><Typography variant="body2" sx={{ color: "#64748B" }}>{summary.priest.hname || ""}{summary.priest.workingCountry ? ` · ${summary.priest.workingCountry}` : ""}{summary.priest.phone ? ` · ${summary.priest.phone}` : ""}</Typography></Box>
+              <Box><GradientText variant="h6">Fr. {summary.priest.name}</GradientText><Typography variant="body2" sx={{ color: "#64748B" }}>{summary.priest.workingCountry ? ` · ${summary.priest.workingCountry}` : ""}{summary.priest.phone ? ` · ${summary.priest.phone}` : ""}</Typography></Box> 
+              {/* {summary.priest.hname || ""} */}
             </Box>
           </StyledCard>
 
