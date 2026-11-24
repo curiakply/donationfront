@@ -364,7 +364,7 @@ const DonationPage = () => {
         size: 110,
         Cell: ({ row }) => (
           <Typography variant="body2" sx={{ fontWeight: 600, color: "#1a237e" }}>
-            {row.original.date ? new Date(row.original.date).toLocaleDateString("en-IN") : "—"}
+          {row.original.date ? fmtDate(row.original.date) : "—"}
           </Typography>
         ),
       },
