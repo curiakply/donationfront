@@ -32,7 +32,15 @@ const MODES = [
 
 const currencySymbol = (c) => CURRENCIES.find((x) => x.value === c)?.symbol || c;
 const modeStyle = (m) => MODES.find((x) => x.value === m) || { color: "#6B7280", bg: "#F3F4F6" };
-
+// Date formatter dd/MMM/yyyy
+const fmtDate = (d) => {
+  if (!d) return "";
+  const dt = new Date(d);
+  const day = String(dt.getDate()).padStart(2, "0");
+  const mon = dt.toLocaleString("en-US", { month: "short" });
+  const year = dt.getFullYear();
+  return `${day}/${mon}/${year}`;
+};
 // ─── Theme ────────────────────────────────────────────────────────────────────
 
 const theme = createTheme({
