@@ -28,6 +28,16 @@ const GradientText = ({ children, variant = "h5", sx = {} }) => (<Typography var
 const StatBox = styled(Box)(() => ({ padding: "20px 24px", borderRadius: 16, backgroundColor: "#fff", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)", display: "flex", alignItems: "center", gap: 16, flex: 1, minWidth: 180, transition: "all 0.3s ease", "&:hover": { transform: "translateY(-4px)", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)" } }));
 const StatValue = styled(Typography)(() => ({ fontSize: "1.6rem", fontWeight: 700, lineHeight: 1.2, background: "linear-gradient(45deg, #1a237e, #0d47a1)", backgroundClip: "text", WebkitBackgroundClip: "text", color: "transparent" }));
 
+// Date formatter: dd/MMM/yyyy
+const fmtDate = (d) => {
+  if (!d) return "";
+  const dt = new Date(d);
+  const day = String(dt.getDate()).padStart(2, "0");
+  const mon = dt.toLocaleString("en-US", { month: "short" });
+  const year = dt.getFullYear();
+  return `${day}/${mon}/${year}`;
+};
+
 // Screen formatters (with symbols)
 const fmtINR = (n) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n || 0);
 const fmtCurrency = (n, c) => new Intl.NumberFormat("en-US", { style: "currency", currency: c || "USD", maximumFractionDigits: 2 }).format(n || 0);
@@ -55,8 +65,8 @@ const OrganizationReport = () => {
     doc.setFontSize(16); doc.setFont("helvetica", "bold"); doc.text("Receivers-wise Donation Report", 14, 18);
     doc.setFontSize(9); doc.setFont("helvetica", "normal");
     const parts = [];
-    if (fromDate) parts.push(`From: ${new Date(fromDate).toLocaleDateString()}`);
-    if (toDate) parts.push(`To: ${new Date(toDate).toLocaleDateString()}`);
+    if (fromDate) parts.push(`From: ${fmtDate(fromDate)}`);
+    if (toDate) parts.push(`To: ${fmtDate(toDate)}`);
     if (selectedOrg) {
       const orgName = orgList.find((o) => o._id === selectedOrg)?.name || selectedOrg;
       parts.push(`Receiver: ${orgName}`);
@@ -86,7 +96,7 @@ const OrganizationReport = () => {
         r.donations.forEach((d) => {
           tableBody.push([
             "",
-            `    ${d.date ? new Date(d.date).toLocaleDateString() : "-"}`,
+            `    ${fmtDate(d.date) || "-"}`,
             `Fr. ${d.priestName || "-"}`,
             d.purpose || "-",
             d.currency || "",
@@ -130,8 +140,8 @@ const OrganizationReport = () => {
       ["Receivers-wise Donation Report"],
       [],
       ["Filter", "Value"],
-      ["From Date", fromDate ? new Date(fromDate).toLocaleDateString() : "All"],
-      ["To Date", toDate ? new Date(toDate).toLocaleDateString() : "All"],
+      ["From Date", fromDate ? fmtDate(fromDate) : "All"],
+      ["To Date", toDate ? fmtDate(toDate) : "All"],
       ["Receiver", selectedOrg ? (orgList.find((o) => o._id === selectedOrg)?.name || selectedOrg) : "All"],
       [],
     ];
@@ -175,7 +185,7 @@ const OrganizationReport = () => {
           detailRows.push([
             "", "", "", "", "", "", "",
             "", // spacer
-            d.date ? new Date(d.date).toLocaleDateString() : "",
+            fmtDate(d.date),
             d.priestName ? `Fr. ${d.priestName}` : "",
             d.purpose || "",
             d.currency || "",
@@ -197,7 +207,7 @@ const OrganizationReport = () => {
       { wch: 16 },  // Total INR
       { wch: 10 },  // Status
       { wch: 2 },   // spacer
-      { wch: 12 },  // Date
+      { wch: 14 },  // Date
       { wch: 22 },  // Priest
       { wch: 20 },  // Purpose
       { wch: 10 },  // Currency
@@ -217,7 +227,7 @@ const OrganizationReport = () => {
           flatRows.push([
             slNo++,
             r.organization.name,
-            d.date ? new Date(d.date).toLocaleDateString() : "",
+            fmtDate(d.date),
             d.priestName ? `Fr. ${d.priestName}` : "",
             d.purpose || "",
             d.currency || "",
@@ -230,7 +240,7 @@ const OrganizationReport = () => {
     });
     const wsFlat = XLSX.utils.aoa_to_sheet(flatRows);
     wsFlat["!cols"] = [
-      { wch: 6 }, { wch: 24 }, { wch: 12 }, { wch: 22 }, { wch: 20 },
+      { wch: 6 }, { wch: 24 }, { wch: 14 }, { wch: 22 }, { wch: 20 },
       { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 14 },
     ];
     XLSX.utils.book_append_sheet(wb, wsFlat, "All Donations");
@@ -282,7 +292,7 @@ const OrganizationReport = () => {
           initialState={{ density: "comfortable", pagination: { pageSize: 15 } }}
           renderDetailPanel={({ row }) => {
             if (row.original.isNil) return <Box sx={{ p: 2, bgcolor: "#FEF2F2", borderRadius: 2 }}><Typography variant="body2" sx={{ color: "#DC2626", fontStyle: "italic" }}>No donations for this period.</Typography></Box>;
-            return (<Box sx={{ p: 2 }}><Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>Donation Details</Typography><Box component="table" sx={{ width: "100%", borderCollapse: "collapse", "& th, & td": { p: 1, textAlign: "left", fontSize: "0.82rem", borderBottom: "1px solid #E2E8F0" }, "& th": { fontWeight: 700, color: "#64748B", bgcolor: "#f8fafc" } }}><thead><tr><th>Date</th><th>Priest</th><th>Purpose</th><th>Currency</th><th style={{ textAlign: "right" }}>Amount</th><th style={{ textAlign: "right" }}>INR</th><th>Mode</th></tr></thead><tbody>{row.original.donations.map((d, idx) => (<tr key={idx}><td>{d.date ? new Date(d.date).toLocaleDateString() : "—"}</td><td style={{ fontWeight: 600 }}>Fr. {d.priestName}</td><td>{d.purpose || "—"}</td><td><Chip label={d.currency} size="small" sx={{ fontWeight: 600, fontSize: "0.7rem", height: 22, bgcolor: "#E8EAF6", color: "#1a237e" }} /></td><td style={{ textAlign: "right", fontWeight: 600 }}>{fmtCurrency(d.amount, d.currency)}</td><td style={{ textAlign: "right", fontWeight: 600, color: "#059669" }}>{fmtINR(d.inrAmount)}</td><td>{d.modeOfTransfer || "—"}</td></tr>))}</tbody></Box></Box>);
+            return (<Box sx={{ p: 2 }}><Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>Donation Details</Typography><Box component="table" sx={{ width: "100%", borderCollapse: "collapse", "& th, & td": { p: 1, textAlign: "left", fontSize: "0.82rem", borderBottom: "1px solid #E2E8F0" }, "& th": { fontWeight: 700, color: "#64748B", bgcolor: "#f8fafc" } }}><thead><tr><th>Date</th><th>Priest</th><th>Purpose</th><th>Currency</th><th style={{ textAlign: "right" }}>Amount</th><th style={{ textAlign: "right" }}>INR</th><th>Mode</th></tr></thead><tbody>{row.original.donations.map((d, idx) => (<tr key={idx}><td>{fmtDate(d.date) || "—"}</td><td style={{ fontWeight: 600 }}>Fr. {d.priestName}</td><td>{d.purpose || "—"}</td><td><Chip label={d.currency} size="small" sx={{ fontWeight: 600, fontSize: "0.7rem", height: 22, bgcolor: "#E8EAF6", color: "#1a237e" }} /></td><td style={{ textAlign: "right", fontWeight: 600 }}>{fmtCurrency(d.amount, d.currency)}</td><td style={{ textAlign: "right", fontWeight: 600, color: "#059669" }}>{fmtINR(d.inrAmount)}</td><td>{d.modeOfTransfer || "—"}</td></tr>))}</tbody></Box></Box>);
           }} />
       </ChartCard>
 

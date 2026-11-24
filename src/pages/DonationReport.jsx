@@ -40,6 +40,14 @@ const StatValue = styled(Typography)(() => ({
   backgroundClip: "text", WebkitBackgroundClip: "text", color: "transparent",
 }));
 
+const fmtDate = (d) => {
+  if (!d) return "";
+  const dt = new Date(d);
+  const day = String(dt.getDate()).padStart(2, "0");
+  const mon = dt.toLocaleString("en-US", { month: "short" });
+  const year = dt.getFullYear();
+  return `${day}/${mon}/${year}`;
+};
 const fmtINR = (n) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n || 0);
 const fmtCurrency = (n, c) => new Intl.NumberFormat("en-US", { style: "currency", currency: c || "USD", maximumFractionDigits: 2 }).format(n || 0);
 const fmtINR_PDF = (n) => "INR " + Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -137,8 +145,8 @@ const DonationReport = () => {
     doc.setFontSize(16); doc.setFont("helvetica", "bold"); doc.text("Donation Report", margin, 18);
     doc.setFontSize(9); doc.setFont("helvetica", "normal");
     const parts = [];
-    if (fromDate) parts.push(`From: ${new Date(fromDate).toLocaleDateString()}`);
-    if (toDate) parts.push(`To: ${new Date(toDate).toLocaleDateString()}`);
+    if (fromDate) parts.push(`From: ${fmtDate(fromDate)}`);
+    if (toDate) parts.push(`To: ${fmtDate(toDate)}`);
     if (country) parts.push(`Country: ${country}`);
     doc.text(parts.length ? parts.join("  |  ") : "All records", margin, 25);
     if (summary) doc.text(`Priests: ${summary.totalPriests}  |  Contributors: ${summary.contributingPriests}  |  NIL: ${summary.nilPriests}  |  Total: ${fmtINR_PDF(summary.grandTotalINR)}`, margin, 31);
@@ -229,7 +237,7 @@ const DonationReport = () => {
         donations.forEach((d) => {
           let x = margin + colW[0] + colW[1];
           const vals = [
-            d.date ? new Date(d.date).toLocaleDateString("en-GB") : "",
+            fmtDate(d.date),
             d.purpose || "",
             d.currency || "",
             d.amount ? Number(d.amount).toLocaleString("en-IN") : "",
@@ -262,8 +270,8 @@ const DonationReport = () => {
   const exportWord = () => {
     if (!report.length) return;
     const filterParts = [];
-    if (fromDate) filterParts.push(`From: ${new Date(fromDate).toLocaleDateString()}`);
-    if (toDate) filterParts.push(`To: ${new Date(toDate).toLocaleDateString()}`);
+    if (fromDate) filterParts.push(`From: ${fmtDate(fromDate)}`);
+    if (toDate) filterParts.push(`To: ${fmtDate(toDate)}`);
     if (country) filterParts.push(`Country: ${country}`);
 
     let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
@@ -311,7 +319,7 @@ const DonationReport = () => {
             html += `<td class="priest-name" style="text-align:center; vertical-align:middle" rowspan="${span}">${i + 1}</td>`;
             html += `<td class="priest-name" style="vertical-align:middle" rowspan="${span}">Fr. ${r.priest.name}</td>`;
           }
-          html += `<td>${d.date ? new Date(d.date).toLocaleDateString("en-GB") : ""}</td>`;
+          html += `<td>${fmtDate(d.date)}</td>`;
           html += `<td>${d.purpose || ""}</td>`;
           html += `<td style="text-align:center">${d.currency || ""}</td>`;
           html += `<td style="text-align:right">${d.amount ? Number(d.amount).toLocaleString("en-IN") : ""}</td>`;
@@ -367,7 +375,7 @@ const DonationReport = () => {
           rows.push([
             di === 0 ? i + 1 : "",
             di === 0 ? `Fr. ${r.priest.name}` : "",
-            d.date ? new Date(d.date).toLocaleDateString("en-GB") : "",
+            fmtDate(d.date),
             d.purpose || "",
             d.currency || "",
             d.amount ? Number(d.amount) : "",
@@ -452,8 +460,8 @@ const DonationReport = () => {
     const summaryRows = [
       ["Donation Report"], [],
       ["Filter", "Value"],
-      ["From Date", fromDate ? new Date(fromDate).toLocaleDateString() : "All"],
-      ["To Date", toDate ? new Date(toDate).toLocaleDateString() : "All"],
+      ["From Date", fromDate ? fmtDate(fromDate) : "All"],
+      ["To Date", toDate ? fmtDate(toDate) : "All"],
       ["Country", country || "All"], [],
     ];
     if (summary) {
@@ -529,7 +537,7 @@ const DonationReport = () => {
           initialState={{ density: "comfortable", pagination: { pageSize: 25 }, sorting: [{ id: "priest.name", desc: false }] }}
           renderDetailPanel={({ row }) => {
             if (row.original.isNil) return <Box sx={{ p: 2, bgcolor: "#FEF2F2", borderRadius: 2 }}><Typography variant="body2" sx={{ color: "#DC2626", fontStyle: "italic" }}>No donations for this period.</Typography></Box>;
-            return (<Box sx={{ p: 2 }}><Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>Donation Details</Typography><Box component="table" sx={{ width: "100%", borderCollapse: "collapse", "& th, & td": { p: 1, textAlign: "left", fontSize: "0.82rem", borderBottom: "1px solid #E2E8F0" }, "& th": { fontWeight: 700, color: "#64748B", bgcolor: "#f8fafc" } }}><thead><tr><th>Date</th><th>Purpose</th><th>Currency</th><th style={{ textAlign: "right" }}>Amount</th><th style={{ textAlign: "right" }}>INR</th><th>Mode</th><th>Remarks</th></tr></thead><tbody>{row.original.donations.map((d, idx) => (<tr key={idx}><td>{d.date ? new Date(d.date).toLocaleDateString() : "—"}</td><td>{d.purpose || "—"}</td><td><Chip label={d.currency} size="small" sx={{ fontWeight: 600, fontSize: "0.7rem", height: 22, bgcolor: "#E8EAF6", color: "#1a237e" }} /></td><td style={{ textAlign: "right", fontWeight: 600 }}>{fmtCurrency(d.amount, d.currency)}</td><td style={{ textAlign: "right", fontWeight: 600, color: "#059669" }}>{fmtINR(d.inrAmount)}</td><td>{d.modeOfTransfer || "—"}</td><td style={{ color: "#64748B" }}>{d.remarks || "—"}</td></tr>))}</tbody></Box></Box>);
+            return (<Box sx={{ p: 2 }}><Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>Donation Details</Typography><Box component="table" sx={{ width: "100%", borderCollapse: "collapse", "& th, & td": { p: 1, textAlign: "left", fontSize: "0.82rem", borderBottom: "1px solid #E2E8F0" }, "& th": { fontWeight: 700, color: "#64748B", bgcolor: "#f8fafc" } }}><thead><tr><th>Date</th><th>Purpose</th><th>Currency</th><th style={{ textAlign: "right" }}>Amount</th><th style={{ textAlign: "right" }}>INR</th><th>Mode</th><th>Remarks</th></tr></thead><tbody>{row.original.donations.map((d, idx) => (<tr key={idx}><td>{d.date ? fmtDate(d.date) : "—"}</td><td>{d.purpose || "—"}</td><td><Chip label={d.currency} size="small" sx={{ fontWeight: 600, fontSize: "0.7rem", height: 22, bgcolor: "#E8EAF6", color: "#1a237e" }} /></td><td style={{ textAlign: "right", fontWeight: 600 }}>{fmtCurrency(d.amount, d.currency)}</td><td style={{ textAlign: "right", fontWeight: 600, color: "#059669" }}>{fmtINR(d.inrAmount)}</td><td>{d.modeOfTransfer || "—"}</td><td style={{ color: "#64748B" }}>{d.remarks || "—"}</td></tr>))}</tbody></Box></Box>);
           }} />
       </ChartCard>
 

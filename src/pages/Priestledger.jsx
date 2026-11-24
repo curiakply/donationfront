@@ -32,6 +32,16 @@ const StatValue = styled(Typography)(() => ({ fontSize: "1.6rem", fontWeight: 70
 const fmtINR = (n) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n || 0);
 const fmtCurrency = (n, c) => new Intl.NumberFormat("en-US", { style: "currency", currency: c || "USD", maximumFractionDigits: 2 }).format(n || 0);
 
+// Date formatter dd/MMM/yyyy
+const fmtDate = (d) => {
+  if (!d) return "";
+  const dt = new Date(d);
+  const day = String(dt.getDate()).padStart(2, "0");
+  const mon = dt.toLocaleString("en-US", { month: "short" });
+  const year = dt.getFullYear();
+  return `${day}/${mon}/${year}`;
+};
+
 // PDF-safe formatters (plain ASCII)
 const fmtINR_PDF = (n) => "INR " + Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtCurrency_PDF = (n, c) => (c || "USD") + " " + Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -60,8 +70,8 @@ const PriestLedger = () => {
     doc.text(`Priest: Fr. ${summary.priest.name}`, 14, 26);
     // doc.text(`House Name: ${summary.priest.hname || "-"}`, 14, 32);
     const parts = [];
-    if (fromDate) parts.push(`From: ${new Date(fromDate).toLocaleDateString()}`);
-    if (toDate) parts.push(`To: ${new Date(toDate).toLocaleDateString()}`);
+    if (fromDate) parts.push(`From: ${fmtDate(fromDate)}`);
+    if (toDate) parts.push(`To: ${fmtDate(toDate)}`);
     if (parts.length) doc.text(parts.join("  |  "), 14, 38);
 
     const currLines = Object.entries(summary.currencyTotals).map(([c, a]) => `${c}: ${fmtCurrency_PDF(a, c)}`).join("  |  ");
@@ -76,7 +86,7 @@ const PriestLedger = () => {
       body: ledger.map((r) => [
         r.slNo,
         r.organization,
-        r.date ? new Date(r.date).toLocaleDateString() : "-",
+        r.date ? fmtDate(r.date) : "-",
         r.purpose || "-",
         r.currency,
         fmtCurrency_PDF(r.amount, r.currency),
@@ -96,8 +106,8 @@ const PriestLedger = () => {
     if (!ledger.length || !summary) return;
     const priestName = summary.priest.name;
     const filterParts = [];
-    if (fromDate) filterParts.push(`From: ${new Date(fromDate).toLocaleDateString()}`);
-    if (toDate) filterParts.push(`To: ${new Date(toDate).toLocaleDateString()}`);
+    if (fromDate) filterParts.push(`From: ${fmtDate(fromDate)}`);
+    if (toDate) filterParts.push(`To: ${fmtDate(toDate)}`);
 
     // Build total string same as donation report
     const totalParts = [];
@@ -139,7 +149,7 @@ const PriestLedger = () => {
           html += `<td class="priest-name" style="text-align:center; vertical-align:middle" rowspan="${span}">1</td>`;
           // html += `<td class="priest-name" style="vertical-align:middle" rowspan="${span}">Fr. ${priestName}</td>`;
         }
-        html += `<td>${d.date ? new Date(d.date).toLocaleDateString("en-GB") : ""}</td>`;
+        html += `<td>${d.date ? fmtDate(d.date) : ""}</td>`;
         html += `<td>${d.purpose || ""}</td>`;
         html += `<td style="text-align:center">${d.currency || ""}</td>`;
         html += `<td style="text-align:right">${d.amount ? Number(d.amount).toLocaleString("en-IN") : ""}</td>`;
@@ -176,8 +186,8 @@ const PriestLedger = () => {
       ["Phone", summary.priest.phone || ""],
       [],
       ["Filter", "Value"],
-      ["From Date", fromDate ? new Date(fromDate).toLocaleDateString() : "All"],
-      ["To Date", toDate ? new Date(toDate).toLocaleDateString() : "All"],
+      ["From Date", fromDate ? fmtDate(fromDate) : "All"],
+      ["To Date", toDate ? fmtDate(toDate) : "All"],
       [],
       ["Summary", ""],
       ["Total Donations", summary.totalDonations],
@@ -197,7 +207,7 @@ const PriestLedger = () => {
       ledgerRows.push([
         r.slNo,
         r.organization,
-        r.date ? new Date(r.date).toLocaleDateString() : "",
+        r.date ? fmtDate(r.date) : "",
         r.purpose || "",
         r.currency,
         r.amount || 0,
@@ -227,7 +237,7 @@ const PriestLedger = () => {
   const columns = useMemo(() => [
     { accessorKey: "slNo", header: "#", size: 60, Cell: ({ row }) => <Typography variant="body2" sx={{ fontWeight: 600, textAlign: "center", color: "#64748B" }}>{row.original.slNo}</Typography> },
     { accessorKey: "organization", header: "Receivers", size: 180, Cell: ({ row }) => <Typography variant="body2" sx={{ fontWeight: 600, color: "#0F172A" }}>{row.original.organization}</Typography> },
-    { accessorKey: "date", header: "Date", size: 120, Cell: ({ row }) => <Typography variant="body2" sx={{ fontWeight: 600, color: "#0F172A" }}>{row.original.date ? new Date(row.original.date).toLocaleDateString() : "—"}</Typography> },
+    { accessorKey: "date", header: "Date", size: 120, Cell: ({ row }) => <Typography variant="body2" sx={{ fontWeight: 600, color: "#0F172A" }}>{row.original.date ? fmtDate(row.original.date) : "—"}</Typography> },
 
     { accessorKey: "purpose", header: "Purpose", size: 160, Cell: ({ row }) => <Typography variant="body2" sx={{ color: "#64748B" }}>{row.original.purpose || "—"}</Typography> },
     { accessorKey: "currency", header: "Currency", size: 100, Cell: ({ row }) => <Chip label={row.original.currency} size="small" sx={{ fontWeight: 700, fontSize: "0.7rem", height: 22, bgcolor: "#E8EAF6", color: "#1a237e" }} /> },
