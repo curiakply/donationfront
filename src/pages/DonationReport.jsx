@@ -15,7 +15,7 @@ import {
 } from "@mui/icons-material";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import * as XLSX from "xlsx";
+import * as XLSX from "xlsx-js-style";
 
 // ─── Styled ───────────────────────────────────────────────────────────────────
 const Page = styled(Box)(() => ({ backgroundColor: "#f8fafc", minHeight: "100vh", padding: 24 }));
@@ -46,83 +46,6 @@ const fmtINR_PDF = (n) => "INR " + Number(n || 0).toLocaleString("en-IN", { mini
 const fmtCurrency_PDF = (n, c) => (c || "USD") + " " + Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 // ─── Status History Helper ────────────────────────────────────────────────────
-//
-// Checks if any non-active period overlaps with the report date range.
-// Two checks:
-//   1. CURRENT status: if not active, inactive from priest.statusDate onwards (no end)
-//   2. HISTORY entries: each non-active entry ran from entry.date (statusDate)
-//      until entry.changedAt (or the next entry's changedAt/date as fallback)
-//
-// If ANY non-active window overlaps [from, to], priest is excluded.
-
-// const wasActiveDuring = (priest, fromStr, toStr) => {
-//   // No date filter → just check current status
-//   if (!fromStr && !toStr) {
-//     return !priest.status || priest.status === "active";
-//   }
-
-//   const from = fromStr ? new Date(fromStr) : new Date("1900-01-01");
-//   const to = toStr ? new Date(toStr + "T23:59:59.999Z") : new Date("2099-12-31");
-
-//   // ── Check 1: Current status ──
-//   if (priest.status && priest.status !== "active") {
-//     const inactiveFrom = priest.statusDate
-//       ? new Date(priest.statusDate)
-//       : new Date("1900-01-01");
-//     // Currently inactive from inactiveFrom until forever — overlaps?
-//     if (inactiveFrom <= to) return false;
-//   }
-
-//   // ── Check 2: Historical non-active periods ──
-//   const history = priest.statusHistory || [];
-//   for (let i = 0; i < history.length; i++) {
-//     if (history[i].status === "active") continue;
-
-//     // Start of this non-active period = its statusDate
-//     const start = history[i].date
-//       ? new Date(history[i].date)
-//       : new Date("1900-01-01");
-
-//     // End of this non-active period = when they LEFT this status
-//     let end;
-//     if (history[i].changedAt) {
-//       // Best: exact transition timestamp
-//       end = new Date(history[i].changedAt);
-//     } else if (i + 1 < history.length) {
-//       // Fallback: next history entry's changedAt or date
-//       end = new Date(history[i + 1].changedAt || history[i + 1].date);
-//     } else {
-//       // Last entry without changedAt — use start as end (point-in-time check)
-//       end = new Date(start);
-//     }
-
-//     // Does [start, end] overlap with [from, to]?
-//     if (start <= to && end >= from) {
-//       return false;
-//     }
-//   }
-
-//   return true;
-// };
-// const wasActiveDuring = (priest, fromStr, toStr) => {
-//   // No date filter → just check current status
-//   if (!fromStr && !toStr) {
-//     return !priest.status || priest.status === "active";
-//   }
-
-//   // If currently active → always show
-//   if (!priest.status || priest.status === "active") return true;
-
-//   // Currently not active — check if they were already inactive before report starts
-//   if (!priest.statusDate) return false; // no date = treat as always inactive
-
-//   const inactiveFrom = new Date(priest.statusDate);
-//   const from = new Date(fromStr || "1900-01-01");
-
-//   // If they became inactive before or on report start → exclude
-//   // If they became inactive after report start → they were active for part of the period → include
-//   return inactiveFrom > from;
-// };
 const wasActiveDuring = (priest, fromStr, toStr) => {
   // No date filter → just check current status
   if (!fromStr && !toStr) {
@@ -153,7 +76,6 @@ const wasActiveDuring = (priest, fromStr, toStr) => {
       : start;
 
     // Was inactive on the report's from-date?
-    // start <= fromDate AND end > fromDate (reactivated AFTER that day)
     if (start <= fromDate && end > fromDate) {
       return false;
     }
@@ -416,6 +338,117 @@ const DonationReport = () => {
     if (!report.length) return;
     const wb = XLSX.utils.book_new();
 
+    // ── Build rows matching PDF/Word format: Sl No | Priest Name | Date | Purpose | Currency | Amount | Total ──
+    const headers = ["Sl No", "Priest Name", "Date", "Purpose", "Currency", "Amount", "Total"];
+    const rows = [];
+    const merges = [];
+    let rowIdx = 0; // 0-based data row index (excluding header)
+
+    report.forEach((r, i) => {
+      const donations = (!r.isNil && r.donations && r.donations.length > 0) ? r.donations : [];
+      const rowCount = Math.max(donations.length, 1);
+
+      // Compute total string (same as PDF/Word)
+      const totalParts = [];
+      if (r.currencies && r.currencies.length) {
+        r.currencies.forEach((c) => {
+          const sum = donations.filter((d) => d.currency === c).reduce((s, d) => s + d.amount, 0);
+          if (sum > 0) totalParts.push(`${c} ${Number(sum).toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`);
+        });
+      }
+      const totalStr = totalParts.length ? totalParts.join(", ") : (r.isNil ? "NIL" : "—");
+
+      if (donations.length === 0) {
+        // NIL priest — single row
+        rows.push([i + 1, `Fr. ${r.priest.name}`, "", "", "", "", totalStr]);
+        rowIdx++;
+      } else {
+        donations.forEach((d, di) => {
+          rows.push([
+            di === 0 ? i + 1 : "",
+            di === 0 ? `Fr. ${r.priest.name}` : "",
+            d.date ? new Date(d.date).toLocaleDateString("en-GB") : "",
+            d.purpose || "",
+            d.currency || "",
+            d.amount ? Number(d.amount) : "",
+            di === 0 ? totalStr : "",
+          ]);
+          rowIdx++;
+        });
+
+        // Add merges for Sl No (col 0), Priest Name (col 1), Total (col 6) when multiple donations
+        if (rowCount > 1) {
+          const startRow = rowIdx - rowCount + 1; // +1 because header is row 0 in sheet
+          const endRow = rowIdx;
+          merges.push({ s: { r: startRow, c: 0 }, e: { r: endRow, c: 0 } }); // Sl No
+          merges.push({ s: { r: startRow, c: 1 }, e: { r: endRow, c: 1 } }); // Priest Name
+          merges.push({ s: { r: startRow, c: 6 }, e: { r: endRow, c: 6 } }); // Total
+        }
+      }
+    });
+
+    // Create sheet with header + data
+    const sheetData = [headers, ...rows];
+    const ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+    // Apply merges
+    ws["!merges"] = merges;
+
+    // Column widths
+    ws["!cols"] = [
+      { wch: 8 },   // Sl No
+      { wch: 24 },  // Priest Name
+      { wch: 14 },  // Date
+      { wch: 28 },  // Purpose
+      { wch: 12 },  // Currency
+      { wch: 14 },  // Amount
+      { wch: 24 },  // Total
+    ];
+
+    // ── Apply borders and styles to all cells ──
+    const border = {
+      top: { style: "thin", color: { rgb: "000000" } },
+      bottom: { style: "thin", color: { rgb: "000000" } },
+      left: { style: "thin", color: { rgb: "000000" } },
+      right: { style: "thin", color: { rgb: "000000" } },
+    };
+    const totalRows = sheetData.length;
+    const totalCols = headers.length;
+    for (let R = 0; R < totalRows; R++) {
+      for (let C = 0; C < totalCols; C++) {
+        const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+        if (!ws[cellRef]) ws[cellRef] = { v: "", t: "s" };
+        if (R === 0) {
+          // Header row styling
+          ws[cellRef].s = {
+            font: { bold: true, color: { rgb: "FFFFFF" }, sz: 11 },
+            fill: { fgColor: { rgb: "1A237E" } },
+            alignment: { horizontal: "center", vertical: "center" },
+            border,
+          };
+        } else {
+          // Data rows
+          ws[cellRef].s = {
+            font: { sz: 10 },
+            alignment: { vertical: "center", wrapText: true },
+            border,
+          };
+        }
+      }
+    }
+    // Bold the Sl No, Priest Name, Total columns in data rows
+    for (let R = 1; R < totalRows; R++) {
+      for (const C of [0, 1, 6]) {
+        const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+        if (ws[cellRef]) {
+          ws[cellRef].s = { ...ws[cellRef].s, font: { bold: true, sz: 10 } };
+        }
+      }
+    }
+
+    XLSX.utils.book_append_sheet(wb, ws, "Donation Report");
+
+    // ── Summary sheet ──
     const summaryRows = [
       ["Donation Report"], [],
       ["Filter", "Value"],
@@ -437,66 +470,6 @@ const DonationReport = () => {
     wsSummary["!cols"] = [{ wch: 22 }, { wch: 20 }];
     XLSX.utils.book_append_sheet(wb, wsSummary, "Summary");
 
-    const detailHeaders = [
-      "Sl No", "Priest Name", "House Name", "Country", "Phone",
-      "# Donations", "Total Foreign", "Total INR", "Status",
-      "", "Date", "Purpose", "Currency", "Amount", "INR Amount", "Mode", "Remarks",
-    ];
-    const detailRows = [detailHeaders];
-    report.forEach((r, i) => {
-      const foreignTotal = r.currencies && r.currencies.length
-        ? r.currencies.map((c) => {
-            const sum = (r.donations || []).filter((d) => d.currency === c).reduce((s, d) => s + d.amount, 0);
-            return `${c} ${Number(sum).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
-          }).join(", ") : "-";
-      detailRows.push([
-        i + 1, `Fr. ${r.priest.name}`, r.priest.hname || "",
-        r.priest.workingCountry || r.priest.workingRegion || "",
-        r.priest.phone || "", r.donationCount, foreignTotal,
-        r.totalINR || 0, r.isNil ? "NIL" : "Contributed",
-        "", "", "", "", "", "", "", "",
-      ]);
-      if (!r.isNil && r.donations && r.donations.length > 0) {
-        r.donations.forEach((d) => {
-          detailRows.push([
-            "", "", "", "", "", "", "", "", "", "",
-            d.date ? new Date(d.date).toLocaleDateString() : "",
-            d.purpose || "", d.currency || "", d.amount || 0,
-            d.inrAmount || 0, d.modeOfTransfer || "", d.remarks || "",
-          ]);
-        });
-      }
-    });
-    const wsDetail = XLSX.utils.aoa_to_sheet(detailRows);
-    wsDetail["!cols"] = [
-      { wch: 6 }, { wch: 22 }, { wch: 18 }, { wch: 14 }, { wch: 14 },
-      { wch: 12 }, { wch: 22 }, { wch: 16 }, { wch: 12 }, { wch: 2 },
-      { wch: 12 }, { wch: 20 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 20 },
-    ];
-    XLSX.utils.book_append_sheet(wb, wsDetail, "Donation Details");
-
-    const flatHeaders = ["Sl No", "Priest",  "Country", "Date", "Purpose", "Currency", "Amount", "INR Amount", "Mode", "Remarks"];
-    const flatRows = [flatHeaders];
-    let slNo = 1;
-    report.forEach((r) => {
-      if (!r.isNil && r.donations && r.donations.length > 0) {
-        r.donations.forEach((d) => {
-          flatRows.push([
-            slNo++, `Fr. ${r.priest.name}`, 
-            r.priest.workingCountry || r.priest.workingRegion || "",
-            d.date ? new Date(d.date).toLocaleDateString() : "",
-            d.purpose || "", d.currency || "", d.amount || 0,
-            d.inrAmount || 0, d.modeOfTransfer || "", d.remarks || "",
-          ]);
-        });
-      }
-    });  
-    const wsFlat = XLSX.utils.aoa_to_sheet(flatRows);
-    wsFlat["!cols"] = [
-      { wch: 6 }, { wch: 22 }, { wch: 18 }, { wch: 14 }, { wch: 12 },
-      { wch: 20 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 20 },
-    ];
-    XLSX.utils.book_append_sheet(wb, wsFlat, "All Donations");
     XLSX.writeFile(wb, `Donation_Report${fromDate ? `_${fromDate}` : ""}${toDate ? `_to_${toDate}` : ""}.xlsx`);
   };
 
