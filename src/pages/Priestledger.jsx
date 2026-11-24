@@ -76,7 +76,7 @@ const PriestLedger = () => {
       body: ledger.map((r) => [
         r.slNo,
         r.organization,
-        r.date ? new Date(r.date).toLocaleDateString() : "-",        
+        r.date ? new Date(r.date).toLocaleDateString() : "-",
         r.purpose || "-",
         r.currency,
         fmtCurrency_PDF(r.amount, r.currency),
@@ -90,6 +90,75 @@ const PriestLedger = () => {
     });
 
     doc.save(`Priest_Ledger_${summary.priest.name.replace(/\s/g, "_")}.pdf`);
+  };
+
+  const exportWord = () => {
+    if (!ledger.length || !summary) return;
+    const priestName = summary.priest.name;
+    const filterParts = [];
+    if (fromDate) filterParts.push(`From: ${new Date(fromDate).toLocaleDateString()}`);
+    if (toDate) filterParts.push(`To: ${new Date(toDate).toLocaleDateString()}`);
+
+    // Build total string same as donation report
+    const totalParts = [];
+    Object.entries(summary.currencyTotals).forEach(([c, a]) => {
+      if (a > 0) totalParts.push(`${c} ${Number(a).toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`);
+    });
+    const totalStr = totalParts.length ? totalParts.join(", ") : "—";
+
+    let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8"><title>Priest Donation Ledger</title>
+<style>
+  body { font-family: Calibri, Arial, sans-serif; margin: 40px; }
+  h1 { font-size: 18pt; color: #1a237e; margin-bottom: 4px; }
+  .subtitle { font-size: 10pt; color: #666; margin-bottom: 16px; }
+  table { border-collapse: collapse; width: 100%; margin-top: 12px; }
+  th { background-color: #1a237e; color: #fff; font-size: 10pt; padding: 8px 10px; text-align: left; }
+  td { border: 1px solid #ccc; font-size: 10pt; padding: 6px 10px; vertical-align: top; }
+  .priest-name { font-weight: bold; }
+  .total-cell { font-weight: bold; }
+  .summary-table { margin-bottom: 16px; }
+  .summary-table td { border: none; padding: 2px 12px 2px 0; font-size: 10pt; }
+  .summary-table td.label { font-weight: bold; color: #1a237e; }
+</style></head><body>
+<h3>Priest Donation Ledger -Fr. ${priestName}</h3>
+`;
+
+    html += `<table class="summary-table"><tr><td class="label">Total Donations:</td><td>${summary.totalDonations}</td></tr></table>`;
+
+    html += `<table><tr><th>Sl No</th><th>Date</th><th>Purpose</th><th>Currency</th><th>Amount</th><th>Total</th></tr>`;
+
+    const span = ledger.length;
+//<td class="priest-name">Fr. ${priestName}</td>
+    if (ledger.length === 0) {
+      html += `<tr><td class="priest-name" style="text-align:center">1</td><td></td><td></td><td></td><td></td><td class="total-cell">NIL</td></tr>`;
+    } else {
+      ledger.forEach((d, di) => {
+        html += `<tr>`;
+        if (di === 0) {
+          html += `<td class="priest-name" style="text-align:center; vertical-align:middle" rowspan="${span}">1</td>`;
+          // html += `<td class="priest-name" style="vertical-align:middle" rowspan="${span}">Fr. ${priestName}</td>`;
+        }
+        html += `<td>${d.date ? new Date(d.date).toLocaleDateString("en-GB") : ""}</td>`;
+        html += `<td>${d.purpose || ""}</td>`;
+        html += `<td style="text-align:center">${d.currency || ""}</td>`;
+        html += `<td style="text-align:right">${d.amount ? Number(d.amount).toLocaleString("en-IN") : ""}</td>`;
+        if (di === 0) {
+          html += `<td class="total-cell" style="vertical-align:middle" rowspan="${span}">${totalStr}</td>`;
+        }
+        html += `</tr>`;
+      });
+    }
+
+    html += `</table></body></html>`;
+
+    const blob = new Blob([html], { type: "application/msword" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Priest_Ledger_${priestName.replace(/\s/g, "_")}.doc`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const exportExcel = () => {
@@ -122,18 +191,18 @@ const PriestLedger = () => {
     XLSX.utils.book_append_sheet(wb, wsSummary, "Summary");
 
     // ── Sheet 2: Ledger ──
-    const ledgerHeaders = ["Sl No", "Date", "Receivers", "Purpose", "Currency", "Amount", "INR Amount", "Running Total (INR)", "Mode", "Remarks"];
+    const ledgerHeaders = ["Sl No", "Receivers","Date", "Purpose", "Currency", "Amount", "INR Amount", "Mode", "Remarks"];
     const ledgerRows = [ledgerHeaders];
     ledger.forEach((r) => {
       ledgerRows.push([
         r.slNo,
-        r.date ? new Date(r.date).toLocaleDateString() : "",
         r.organization,
+        r.date ? new Date(r.date).toLocaleDateString() : "",
         r.purpose || "",
         r.currency,
         r.amount || 0,
         r.inrAmount || 0,
-        r.runningTotal || 0,
+
         r.modeOfTransfer || "",
         r.remarks || "",
       ]);
@@ -141,13 +210,12 @@ const PriestLedger = () => {
     const wsLedger = XLSX.utils.aoa_to_sheet(ledgerRows);
     wsLedger["!cols"] = [
       { wch: 6 },   // Sl No
-      { wch: 12 },  // Date
       { wch: 24 },  // Receivers
+      { wch: 12 },  // Date
       { wch: 20 },  // Purpose
       { wch: 10 },  // Currency
       { wch: 14 },  // Amount
       { wch: 14 },  // INR Amount
-      { wch: 18 },  // Running Total
       { wch: 14 },  // Mode
       { wch: 20 },  // Remarks
     ];
@@ -172,7 +240,7 @@ const PriestLedger = () => {
 
   return (
     <Page><CssBaseline />
-      <StyledCard sx={{ mb: 3 }}><Content><Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><Box sx={{ display: "flex", alignItems: "center", gap: 2 }}><IconBox color="#ea580c"><LedgerIcon sx={{ fontSize: 26 }} /></IconBox><Box><GradientText>Priest Ledger</GradientText><Typography variant="body2" sx={{ color: "#64748B" }}>Chronological donation ledger with running balance</Typography></Box></Box><Box sx={{ display: "flex", gap: 1.5 }}><GradientBtn startIcon={<FileDownloadIcon />} onClick={exportExcel} disabled={!ledger.length} sx={{ background: "linear-gradient(135deg, #059669, #047857)", "&:hover": { background: "linear-gradient(135deg, #047857, #059669)" } }}>Export Excel</GradientBtn><GradientBtn startIcon={<FileDownloadIcon />} onClick={exportPDF} disabled={!ledger.length}>Export PDF</GradientBtn></Box></Box></Content></StyledCard>
+      <StyledCard sx={{ mb: 3 }}><Content><Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><Box sx={{ display: "flex", alignItems: "center", gap: 2 }}><IconBox color="#ea580c"><LedgerIcon sx={{ fontSize: 26 }} /></IconBox><Box><GradientText>Priest Ledger</GradientText><Typography variant="body2" sx={{ color: "#64748B" }}>Chronological donation ledger with running balance</Typography></Box></Box><Box sx={{ display: "flex", gap: 1.5 }}><GradientBtn startIcon={<FileDownloadIcon />} onClick={exportExcel} disabled={!ledger.length} sx={{ background: "linear-gradient(135deg, #059669, #047857)", "&:hover": { background: "linear-gradient(135deg, #047857, #059669)" } }}>Export Excel</GradientBtn><GradientBtn startIcon={<FileDownloadIcon />} onClick={exportPDF} disabled={!ledger.length}>Export PDF</GradientBtn><GradientBtn startIcon={<FileDownloadIcon />} onClick={exportWord} disabled={!ledger.length} sx={{ background: "linear-gradient(135deg, #7c3aed, #6d28d9)", "&:hover": { background: "linear-gradient(135deg, #6d28d9, #7c3aed)" } }}>Export Word</GradientBtn></Box></Box></Content></StyledCard>
 
       <StyledCard sx={{ mb: 3, overflow: "visible" }}>
         <Box sx={{ p: 2.5, display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }} onClick={() => setFiltersOpen(!filtersOpen)}>
@@ -193,7 +261,7 @@ const PriestLedger = () => {
           <StyledCard sx={{ p: 2.5, mb: 2, background: "linear-gradient(135deg, #f8fafc, #E8EAF6)" }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <IconBox color="#4f46e5" sx={{ width: 50, height: 50, borderRadius: "50%" }}><PersonIcon sx={{ fontSize: 26 }} /></IconBox>
-              <Box><GradientText variant="h6">Fr. {summary.priest.name}</GradientText><Typography variant="body2" sx={{ color: "#64748B" }}>{summary.priest.workingCountry ? ` · ${summary.priest.workingCountry}` : ""}{summary.priest.phone ? ` · ${summary.priest.phone}` : ""}</Typography></Box> 
+              <Box><GradientText variant="h6">Fr. {summary.priest.name}</GradientText><Typography variant="body2" sx={{ color: "#64748B" }}>{summary.priest.workingCountry ? ` · ${summary.priest.workingCountry}` : ""}{summary.priest.phone ? ` · ${summary.priest.phone}` : ""}</Typography></Box>
               {/* {summary.priest.hname || ""} */}
             </Box>
           </StyledCard>
@@ -223,6 +291,6 @@ const PriestLedger = () => {
       <Snackbar open={Boolean(msg)} autoHideDuration={5000} onClose={() => setMsg(null)} anchorOrigin={{ vertical: "bottom", horizontal: "right" }}><Alert onClose={() => setMsg(null)} severity={msg?.type || "info"} variant="filled" sx={{ borderRadius: 2, bgcolor: msg?.type === "error" ? "#DC2626" : "#1a237e" }}>{msg?.text}</Alert></Snackbar>
     </Page>
   );
-}; 
- 
+};
+
 export default PriestLedger;
